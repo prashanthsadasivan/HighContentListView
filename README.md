@@ -15,4 +15,17 @@ To get started using it, put a HighContentListView in your xml layout
 />
 ````
 
-Then, make a class that implements 
+Then, make a class that implements the ContentDisplayer Interface.  The interface has three methods, one for displaying the low res content, one for displaying the high res content, and one for setting up the view holders, as you normally would in an adapter's getView method.
+
+Finally, in the Activity that hosts this list view, simply do the following:
+
+````
+mList = (HighContentListView) findViewById(R.id.yourid);
+mAdapter = new HighContentListView<YourObject>(this, R.layout.your_layout, mYourDataList);
+mList.setAdapter(mAdapter);
+mList.setContentDisplayer(new YourContentDisplayer());
+
+and thats it!  When your list view is scrolling, it will create your list items using displayLowResContent, and once the scroll state is idle, it will use displayHighResContent.
+
+
+
