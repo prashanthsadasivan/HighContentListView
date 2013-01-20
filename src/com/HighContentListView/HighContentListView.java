@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,53 +16,45 @@ import android.widget.ListView;
 
 public class HighContentListView extends ListView {
 
-	private ScrollHandler mScrollHandler = new ScrollHandler();
+	private ScrollHandler mScrollHandler;
 	private ContentDisplayer mDisplayer;
-
-	public interface ContentDisplayer {
-		public View displayLowResContent(View v, int position, ListAdapter adapter);
-
-		public View displayHighResContent(View v, int position, ListAdapter adapter);
-
-		public View setUpHolders(int position, View convertView,
-				ViewGroup parent, LayoutInflater i);
-	}
+	private boolean mLoggingEnabled = false;
 
 	private class ScrollHandler implements OnScrollListener {
-		private int startLastLoad;
-		private int endLastLoad;
-		
+		private int startLastLoad = -1;
+		private int endLastLoad = -1;
+
 		OnScrollListener mWrappedListener;
-		
+
 		@Override
 		public void onScroll(AbsListView view, int firstVisibleItem,
 				int visibleItemCount, int totalItemCount) {
-			if(mWrappedListener != null) {
-				mWrappedListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+			if (mWrappedListener != null) {
+				mWrappedListener.onScroll(view, firstVisibleItem,
+						visibleItemCount, totalItemCount);
 			}
 		}
-		
+
 		public void wrapListener(OnScrollListener l) {
 			mWrappedListener = l;
 		}
 
 		@Override
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
-			if(mWrappedListener != null) {
+			if (mWrappedListener != null) {
 				mWrappedListener.onScrollStateChanged(view, scrollState);
 			}
 
 			if (scrollState == OnScrollListener.SCROLL_STATE_IDLE) {
 				displayContentOnIdle(view);
 			} else if (scrollState == OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-				System.out.println("TOUCH_SCROLL");
+				logMsg("TOUCH_SCROLL");
 			} else {
-				System.out.println("FLING");
+				logMsg("FLING");
 			}
 		}
 
 		private void displayContentOnIdle(AbsListView view) {
-
 			int firstVisible = view.getFirstVisiblePosition();
 			int lastVisible = view.getLastVisiblePosition();
 
@@ -69,8 +62,10 @@ public class HighContentListView extends ListView {
 				if (i < startLastLoad || i > endLastLoad) {
 
 					if (mDisplayer != null) {
+						logMsg("displaying high res content for position: " + i);
 						mDisplayer.displayHighResContent(
-								view.getChildAt(i - firstVisible), i, view.getAdapter());
+								view.getChildAt(i - firstVisible), i,
+								view.getAdapter());
 
 					}
 				}
@@ -81,7 +76,7 @@ public class HighContentListView extends ListView {
 	}
 
 	public static class HighContentArrayAdapter<T> extends ArrayAdapter<T> {
-		
+
 		private ContentDisplayer mDisplayer;
 
 		public HighContentArrayAdapter(Context context, int textViewResourceId,
@@ -116,9 +111,9 @@ public class HighContentListView extends ListView {
 		private void setDisplayer(ContentDisplayer displayer) {
 			mDisplayer = displayer;
 		}
-		
+
 		public void addAll(Collection<T> collection) {
-			for(T o : collection) {
+			for (T o : collection) {
 				add(o);
 			}
 		}
@@ -128,11 +123,13 @@ public class HighContentListView extends ListView {
 				ViewGroup parent) {
 			View toReturn = null;
 			if (convertView == null) {
-				toReturn = mDisplayer.setUpHolders(position, convertView, parent, LayoutInflater.from(getContext()));
+				toReturn = mDisplayer.setUpHolders(position, convertView,
+						parent, LayoutInflater.from(getContext()));
 			} else {
 				toReturn = convertView;
 			}
-			toReturn = mDisplayer.displayLowResContent(toReturn, position, this);
+			toReturn = mDisplayer
+					.displayLowResContent(toReturn, position, this);
 			return toReturn;
 		}
 
@@ -142,18 +139,19 @@ public class HighContentListView extends ListView {
 		super(context);
 		init();
 	}
-	
+
 	public HighContentListView(Context context, AttributeSet set) {
 		super(context, set);
 		init();
 	}
+
 	public HighContentListView(Context context, AttributeSet set, int defStyle) {
 		super(context, set, defStyle);
 		init();
 	}
-	
+
 	private void init() {
-		setOnScrollListener(mScrollHandler);
+		mScrollHandler = new ScrollHandler();
 	}
 
 	@Override
@@ -165,7 +163,8 @@ public class HighContentListView extends ListView {
 	public void setContentDisplayer(ContentDisplayer displayer) {
 		mDisplayer = displayer;
 		HighContentArrayAdapter adapter = (HighContentArrayAdapter) getAdapter();
-		if(adapter != null) {
+		if (adapter != null) {
+			super.setOnScrollListener(mScrollHandler);
 			adapter.setDisplayer(displayer);
 		}
 	}
@@ -176,13 +175,22 @@ public class HighContentListView extends ListView {
 		HighContentArrayAdapter HCAdapter = null;
 		if (adapter != null) {
 			try {
-			HCAdapter = (HighContentArrayAdapter) adapter;
+				HCAdapter = (HighContentArrayAdapter) adapter;
 			} catch (ClassCastException e) {
-				throw new RuntimeException("You must set a HighContentAdapter as the adapter for a HighContentListView!");
+				throw new RuntimeException(
+						"You must set a HighContentAdapter as the adapter for a HighContentListView!");
 			}
 		}
 		HCAdapter.setDisplayer(mDisplayer);
 		super.setAdapter(adapter);
+	}
+	public void enableLogging(boolean loggingEnabled) {
+		mLoggingEnabled = loggingEnabled;
+	}
+
+	private void logMsg(String message) {
+		if (mLoggingEnabled)
+			Log.d("HighContentListView", message);
 	}
 
 }
