@@ -20,6 +20,7 @@ public class HighContentListView extends ListView {
 	private ContentDisplayer mDisplayer;
 	private boolean mLoggingEnabled = false;
 
+
 	private class ScrollHandler implements OnScrollListener {
 		private int startLastLoad = -1;
 		private int endLastLoad = -1;
@@ -117,19 +118,23 @@ public class HighContentListView extends ListView {
 				add(o);
 			}
 		}
+		
 
 		@Override
 		public final View getView(int position, View convertView,
 				ViewGroup parent) {
 			View toReturn = null;
 			if (convertView == null) {
-				toReturn = this.mContentDisplayer.setUpHolders(position, convertView,
-						parent, LayoutInflater.from(getContext()));
+				toReturn = this.mContentDisplayer.setUpHolders(position,
+						convertView, parent, LayoutInflater.from(getContext()));
+				toReturn = this.mContentDisplayer.displayHighResContent(
+						toReturn, position, this);
+
 			} else {
 				toReturn = convertView;
+				toReturn = this.mContentDisplayer.displayLowResContent(
+						toReturn, position, this);
 			}
-			toReturn = this.mContentDisplayer
-					.displayLowResContent(toReturn, position, this);
 			return toReturn;
 		}
 
@@ -183,6 +188,7 @@ public class HighContentListView extends ListView {
 		}
 		super.setAdapter(adapter);
 	}
+
 	public void enableLogging(boolean loggingEnabled) {
 		mLoggingEnabled = loggingEnabled;
 	}

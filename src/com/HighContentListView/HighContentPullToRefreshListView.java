@@ -21,7 +21,8 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 	private ScrollHandler mScrollHandler;
 	private static boolean mLoggingEnabled = false;
 
-	public static class ScrollHandler implements OnScrollListener {
+
+	public class ScrollHandler implements OnScrollListener {
 		private int startLastLoad = -1;
 		private int endLastLoad = -1;
 		private ContentDisplayer mDisplayer;
@@ -30,6 +31,7 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 		@Override
 		public void onScroll(AbsListView view, int firstVisibleItem,
 				int visibleItemCount, int totalItemCount) {
+			Log.d("HighContentPTRListView", "SCROLLED");
 			if (mWrappedListener != null) {
 				mWrappedListener.onScroll(view, firstVisibleItem,
 						visibleItemCount, totalItemCount);
@@ -42,6 +44,7 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 
 		@Override
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
+			Log.d("HighContentPTRListView", "SCROLLED");
 			if (mWrappedListener != null) {
 				mWrappedListener.onScrollStateChanged(view, scrollState);
 			}
@@ -129,11 +132,14 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 			if (convertView == null) {
 				toReturn = mDisplayer.setUpHolders(position, convertView,
 						parent, LayoutInflater.from(getContext()));
+				logMsg("convert view was null");
+				toReturn = mDisplayer.displayHighResContent(toReturn, position,
+						this);
 			} else {
 				toReturn = convertView;
+				toReturn = mDisplayer.displayLowResContent(toReturn, position,
+						this);
 			}
-			toReturn = mDisplayer
-					.displayLowResContent(toReturn, position, this);
 			return toReturn;
 		}
 	}
@@ -152,14 +158,17 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 		mScrollHandler = new ScrollHandler();
 		setOnScrollListener(mScrollHandler);
 	}
+
 	@Override
-	public void setAdapter(ListAdapter adapter) {
+	public final void setAdapter(ListAdapter adapter) {
 		// TODO Auto-generated method stub
-		throw new RuntimeException("You should be calling setContentDisplayerForAdapter instead!");
+		throw new RuntimeException(
+				"You should be calling setContentDisplayerForAdapter instead!");
 	}
 
 	/**
-	 * Use this instead of setAdapter!  
+	 * Use this instead of setAdapter!
+	 * 
 	 * @param displayer
 	 * @param adapter
 	 */
