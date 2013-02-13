@@ -21,7 +21,6 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 	private ScrollHandler mScrollHandler;
 	private static boolean mLoggingEnabled = false;
 
-
 	public class ScrollHandler implements OnScrollListener {
 		private int startLastLoad = -1;
 		private int endLastLoad = -1;
@@ -86,6 +85,8 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 
 		private ContentDisplayer mDisplayer;
 
+		public int approxTopViews = 0;
+
 		public HighContentArrayAdapter(Context context, int textViewResourceId,
 				T[] objects) {
 			super(context, textViewResourceId, objects);
@@ -135,10 +136,18 @@ public class HighContentPullToRefreshListView extends PullToRefreshListView {
 				logMsg("convert view was null");
 				toReturn = mDisplayer.displayHighResContent(toReturn, position,
 						this);
+				approxTopViews++;
 			} else {
 				toReturn = convertView;
-				toReturn = mDisplayer.displayLowResContent(toReturn, position,
-						this);
+				if (position < approxTopViews) {
+					toReturn = mDisplayer.displayHighResContent(toReturn,
+							position, this);
+					logMsg("probably going to do high res!");
+				} else {
+					toReturn = mDisplayer.displayLowResContent(toReturn,
+							position, this);
+					
+				}
 			}
 			return toReturn;
 		}
